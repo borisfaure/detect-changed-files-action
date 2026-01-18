@@ -49,6 +49,6 @@ runs:
         CHANGES=$(git diff --name-only ${{ steps.base-ref.outputs.ref }} | \
           docker run --rm -i --network none \
             -v "${{ github.workspace }}/${{ inputs.config-file }}:/config.conf:ro" \
-            ghcr.io/borisfaure/detect-changed-files:0.1.2 /detect-changed-files /config.conf)
+            ghcr.io/borisfaure/detect-changed-files:0.1.3 /detect-changed-files /config.conf)
         echo "changes=$CHANGES" >> $GITHUB_OUTPUT
         echo "$CHANGES"
