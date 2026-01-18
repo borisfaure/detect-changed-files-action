@@ -82,10 +82,11 @@ Example: `.github/changes.conf`
 
 ### `base-ref` (optional)
 
-Base reference for git diff comparison. If not specified, the action will automatically determine the base reference:
-- For pull requests: `github.event.pull_request.base.sha`
-- For push events: `github.event.before`
-- Fallback: `HEAD^`
+Base reference for git diff comparison. If not specified, the action automatically determines the base reference in the following order:
+1. Manual override: `base-ref` input (if provided)
+2. For pull requests: `github.event.pull_request.base.sha`
+3. For push events: `github.event.before` (if not a null SHA)
+4. Fallback: `origin/main`
 
 ## Outputs
 
@@ -140,11 +141,12 @@ Refer to the [detect-changed-files](https://github.com/borisfaure/detect-changed
 
 ## How It Works
 
-1. Determines the base git reference (from input, PR base, or push event)
-2. Runs `git diff --name-only` to get the list of changed files
-3. Passes the file list to a Docker container running the `detect-changed-files` tool
-4. The tool matches files against patterns defined in your configuration file
-5. Returns a JSON object indicating which groups have changes
+1. Determines the base git reference (PR base, push event, manual input, or `origin/main` fallback)
+2. Fetches the base reference from the remote repository to ensure it's available locally
+3. Runs `git diff --name-only` to get the list of changed files
+4. Passes the file list to a Docker container running the `detect-changed-files` tool
+5. The tool matches files against patterns defined in your configuration file
+6. Returns a JSON object indicating which groups have changes
 
 ## License
 

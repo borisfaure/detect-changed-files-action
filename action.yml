@@ -31,11 +31,16 @@ runs:
           echo "ref=${{ inputs.base-ref }}" >> $GITHUB_OUTPUT
         elif [ -n "${{ github.event.pull_request.base.sha }}" ]; then
           echo "ref=${{ github.event.pull_request.base.sha }}" >> $GITHUB_OUTPUT
-        elif [ -n "${{ github.event.before }}" ]; then
+        elif [ -n "${{ github.event.before }}" ] && [ "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ]; then
           echo "ref=${{ github.event.before }}" >> $GITHUB_OUTPUT
         else
-          echo "ref=HEAD^" >> $GITHUB_OUTPUT
+          echo "ref=origin/main" >> $GITHUB_OUTPUT
         fi
+
+    - name: Fetch base reference
+      shell: bash
+      run: |
+        git fetch --depth=1 origin ${{ steps.base-ref.outputs.ref }}
 
     - name: Detect changed files
       id: detect
