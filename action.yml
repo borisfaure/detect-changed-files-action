@@ -1,0 +1,49 @@
+name: 'Detect Changed Files'
+description: 'Analyze changed files and categorize them based on pattern matching rules'
+author: 'Boris Faure'
+
+branding:
+  icon: 'file-text'
+  color: 'blue'
+
+inputs:
+  config-file:
+    description: 'Path to the configuration file'
+    required: true
+  base-ref:
+    description: 'Base reference for git diff (default: github.event.pull_request.base.sha or github.event.before)'
+    required: false
+    default: ''
+
+outputs:
+  changes:
+    description: 'JSON object with boolean values for each configured group'
+    value: ${{ steps.detect.outputs.changes }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Get base reference
+      id: base-ref
+      shell: bash
+      run: |
+        if [ -n "${{ inputs.base-ref }}" ]; then
+          echo "ref=${{ inputs.base-ref }}" >> $GITHUB_OUTPUT
+        elif [ -n "${{ github.event.pull_request.base.sha }}" ]; then
+          echo "ref=${{ github.event.pull_request.base.sha }}" >> $GITHUB_OUTPUT
+        elif [ -n "${{ github.event.before }}" ]; then
+          echo "ref=${{ github.event.before }}" >> $GITHUB_OUTPUT
+        else
+          echo "ref=HEAD^" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Detect changed files
+      id: detect
+      shell: bash
+      run: |
+        CHANGES=$(git diff --name-only ${{ steps.base-ref.outputs.ref }} | \
+          docker run --rm -i --network none \
+            -v "${{ github.workspace }}/${{ inputs.config-file }}:/config.conf:ro" \
+            ghcr.io/borisfaure/detect-changed-files:v0.0.2 /detect-changed-files /config.conf)
+        echo "changes=$CHANGES" >> $GITHUB_OUTPUT
+        echo "$CHANGES"
